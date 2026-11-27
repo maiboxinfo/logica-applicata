@@ -35,7 +35,7 @@ Per evitare dimostrazioni solo apparenti, la skill segue vincoli rigorosi:
 
 ### 1.3 Il verificatore formale
 
-Ogni conclusione presentata come «dimostrata» deve passare dal verificatore **FormalVerifier**. La skill usa `adm.formal.FormalVerifier`, se disponibile, oppure lo script incluso `scripts/formal_verifier.py`, che richiama `lean` o `lake`. Se Lean non è installato, la skill chiede il consenso dell'utente prima di installarlo tramite `elan` e non procede mai di nascosto.
+Ogni conclusione presentata come «dimostrata» deve passare dal verificatore **FormalVerifier**. La skill usa `adm.formal.FormalVerifier`, se disponibile, oppure richiama direttamente `lean` o `lake`. Se Lean non è installato, la skill chiede il consenso dell'utente prima di installarlo tramite `elan` e non procede mai di nascosto.
 
 Il verificatore compila il codice, rifiuta i costrutti vietati, controlla quali assiomi sono stati usati e registra la versione di Lean, la durata e l'impronta (hash) del codice. L'esito può essere di quattro tipi:
 

@@ -1,6 +1,16 @@
 ---
-name: "ragionamento-logico-lean"
-description: Analizza problemi, argomentazioni e documenti espressi in linguaggio naturale applicando i principi della logica formale e di Lean 4. Ricostruisce premesse, ipotesi, regole inferenziali e conclusioni, individua errori e contraddizioni e, quando possibile, formalizza e verifica le dimostrazioni. Ogni conclusione dichiarata «dimostrata» deve passare obbligatoriamente dal verificatore Lean FormalVerifier (adm.formal.FormalVerifier o scripts/formal_verifier.py incluso). Non richiede all'utente conoscenze di Lean 4. Usa questa skill ogni volta che l'utente chiede di verificare un ragionamento, controllare se una conclusione segue dalle premesse, trovare errori logici, fallacie, contraddizioni o passaggi mancanti, analizzare la coerenza di un documento o di un'argomentazione (anche giuridica), oppure formalizzare/dimostrare qualcosa, anche se non nomina la logica o Lean.
+name: ragionamento-logico-lean
+description: >-
+  Analizza problemi, argomentazioni e documenti espressi in linguaggio naturale applicando i principi della logica formale e di Lean 4. Ricostruisce premesse, ipotesi, regole inferenziali e conclusioni, individua errori, fallacie e contraddizioni e, quando possibile, formalizza e verifica le dimostrazioni con Lean 4. Nessuna conclusione viene dichiarata «dimostrata» senza un esito positivo del verificatore. Non richiede all'utente conoscenze di Lean 4. Usa questa skill ogni volta che l'utente chiede di verificare un ragionamento, controllare se una conclusione segue dalle premesse, trovare errori logici, contraddizioni o passaggi mancanti, analizzare la coerenza di un documento o di un'argomentazione (anche giuridica), oppure formalizzare/dimostrare qualcosa, anche se non nomina la logica o Lean. Requisiti: per la verifica formale serve un ambiente che esegua comandi; se Lean 4 manca, la skill chiede il consenso per installarlo (richiede rete), altrimenti fornisce un'analisi dichiarata non verificata.
+metadata:
+  author: "Gaetano Gnasso"
+  author_link: "https://github.com/maiboxinfo/logica-applicata"
+  license: "MIT"
+  version: "2026-11-27"
+  jurisdiction: "All"
+  language: "Italian"
+  category: "legal-reasoning"
+  requires: "esecuzione di comandi shell per la verifica con Lean 4 (opzionale: rete per installarlo)"
 ---
 
 # Ragionamento logico e formalizzazione Lean 4
@@ -152,25 +162,9 @@ theorem incoerenti (P : Prop) (a : P) (b : ¬P) : False := b a
 Ordine di preferenza:
 
 1. `adm.formal.FormalVerifier`, se esposto dall'ambiente;
-2. altrimenti l'implementazione inclusa: `scripts/formal_verifier.py` (classe `FormalVerifier`), che invoca davvero `lean` (o `lake env lean` se si indica un progetto Lake).
+2. altrimenti il compilatore `lean` (o `lake env lean` all'interno di un progetto Lake), eseguito direttamente secondo la procedura del punto 5.1.1, applicando a mano i controlli elencati in 5.2.
 
-Uso dell'implementazione inclusa:
-
-```bash
-python scripts/formal_verifier.py prova.lean --timeout 60 --json
-# oppure da stdin:  python scripts/formal_verifier.py - < prova.lean
-# con progetto Lake: --project /percorso/progetto
-```
-
-Exit code: `0` PASSED · `1` FAILED · `2` UNAVAILABLE · `3` TIMEOUT.
-
-Da Python:
-
-```python
-from formal_verifier import FormalVerifier
-res = FormalVerifier(timeout=60).verify(codice_lean)
-print(res.status, res.message, res.axioms_used, res.code_sha256)
-```
+Esiti da ricondurre agli stati della sezione 5.3: compilazione senza errori e senza `sorry` → PASSED; errori, `sorry` o assiomi non ammessi → FAILED; Lean assente e non installabile → UNAVAILABLE; tempo scaduto → TIMEOUT.
 
 ### 5.1.1 Installazione di Lean sulla macchina virtuale (obbligatoria se manca)
 
@@ -198,23 +192,24 @@ lean --version
 ```
 
 4. **Ricordare che l'ambiente si azzera tra un'attività e l'altra:** se `lean` non si trova più, ripetere il controllo e, con il consenso già ottenuto, reinstallare.
-5. **Usare Lean davvero** sul codice formalizzato (via `scripts/formal_verifier.py` se presente, altrimenti direttamente):
+5. **Usare Lean davvero** sul codice formalizzato:
 
 ```bash
 export PATH="$HOME/.elan/bin:$PATH"
-cat > /home/claude/prova.lean <<'LEAN'
+DIR=$(mktemp -d)
+cat > "$DIR/prova.lean" <<'LEAN'
 -- codice formalizzato
 LEAN
-lean /home/claude/prova.lean
+timeout 60 lean "$DIR/prova.lean"
 # per gli assiomi: aggiungere in coda  #print axioms nome_teorema
 ```
 
    Esito `0` senza errori e senza `sorry` = PASSED; altrimenti FAILED. Mai dedurre l'esito senza eseguire il comando.
 6. **Solo se** l'utente rifiuta l'installazione, la rete resta bloccata o l'installazione fallisce, lo stato è UNAVAILABLE: dichiarare esplicitamente il motivo e presentare la conclusione come *non verificata formalmente*, con l'analisi concettuale chiaramente etichettata.
 
-Se `scripts/formal_verifier.py` non esiste nella cartella della skill, non è un motivo per UNAVAILABLE: usare direttamente `lean` come al punto 5.
+L'assenza di `adm.formal.FormalVerifier` non è un motivo per UNAVAILABLE: usare direttamente `lean` come al punto 5.
 
-### 5.2 Cosa controlla il FormalVerifier
+### 5.2 Controlli da eseguire (FormalVerifier o verifica diretta con `lean`)
 
 - compila il codice con Lean 4 (nessuna simulazione);
 - rifiuta `sorry`/`admit`, `axiom`, `native_decide`, costrutti `unsafe`/`extern`, e file privi di teoremi;
@@ -256,7 +251,7 @@ Ogni risposta che contiene una conclusione sottoposta a verifica termina con un 
 
 ```text
 Verifica formale: PASSED | FAILED | UNAVAILABLE | TIMEOUT
-Verificatore: adm.formal.FormalVerifier | scripts/formal_verifier.py (Lean <versione>)
+Verificatore: adm.formal.FormalVerifier | lean (Lean <versione>)
 Elementi verificati: <proposizioni/teoremi, in italiano>
 Assiomi usati: nessuno oltre a quelli standard (logica classica sì/no)
 Parti non formalizzate: <elenco o "nessuna">
@@ -421,3 +416,13 @@ La formalizzazione e il verificatore sono strumenti interni di rigore obbligator
 **Linguaggio naturale in ingresso. Rigore logico-formale verificato nell'elaborazione. Linguaggio naturale in uscita.**
 
 Lean 4 verifica la correttezza formale delle dimostrazioni rispetto alle definizioni e alle ipotesi dichiarate. Non certifica automaticamente la verità delle informazioni, la correttezza delle interpretazioni o la fondatezza delle decisioni.
+
+## 12. Limiti e rischi (Limitations)
+
+Questa skill è uno strumento di supporto al ragionamento e non costituisce consulenza legale, medica o professionale.
+
+- **Un PASSED attesta solo la coerenza logica.** Certifica che la conclusione deriva dalle premesse dichiarate; non certifica la verità dei fatti o delle premesse, la fedeltà della traduzione dal linguaggio naturale alla formalizzazione, la completezza della documentazione, la corretta interpretazione di norme o documenti, né la fondatezza giuridica, clinica o tecnica delle conclusioni.
+- **La traduzione in Lean è una scelta interpretativa.** Una formalizzazione infedele può produrre un PASSED su un problema diverso da quello posto: per questo premesse e parti non formalizzate vanno sempre rese esplicite nella risposta.
+- **Dipendenza dall'ambiente.** La verifica richiede di poter eseguire comandi e, se Lean manca, di scaricarlo dalla rete con il consenso dell'utente. Senza queste capacità l'esito è UNAVAILABLE e l'analisi resta concettuale e dichiarata come non verificata.
+- **Ambito giurisdizionale.** Il metodo logico è indipendente dall'ordinamento; gli esempi e la terminologia giuridica sono pensati per il diritto italiano, e la valutazione giuridica di merito resta sempre al professionista competente.
+- **Nessun codice eseguibile incluso.** La skill contiene solo istruzioni testuali; gli unici comandi previsti sono l'installazione facoltativa di Lean 4 tramite il programma ufficiale `elan` e la compilazione locale dei file Lean prodotti durante l'analisi.

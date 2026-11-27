@@ -1,0 +1,22 @@
+Ragionamento logico e formalizzazione Lean 4 (ragionamento-logico-lean)
+Copyright (c) 2026 Gaetano Gnasso
+
+Autore originale: Ing. Gaetano Gnasso
+Origine: https://github.com/maiboxinfo/logica-applicata
+Licenza: MIT License (testo integrale nel file LICENSE)
+
+Opera originale dell'autore. Questo pacchetto è la versione preparata per la
+pubblicazione su lawve.ai: struttura della cartella, metadati del frontmatter,
+sezione "Limiti e rischi" e rimozione dei riferimenti a uno script verificatore
+non incluso nel repository.
+
+Codice: il pacchetto non contiene codice eseguibile. Le istruzioni prevedono,
+solo con il consenso esplicito dell'utente, l'installazione di Lean 4 tramite
+lo script ufficiale elan (github.com/leanprover/elan) e la compilazione locale
+dei file Lean generati durante l'analisi. Nessun'altra chiamata di rete.
+
+Esclusione di garanzia: la skill è fornita "così com'è", senza garanzie.
+La verifica formale attesta solo la derivabilità della conclusione dalle
+premesse dichiarate; non certifica la verità dei fatti, la correttezza delle
+interpretazioni né la fondatezza giuridica delle conclusioni, e non sostituisce
+il giudizio professionale.
