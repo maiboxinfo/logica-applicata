@@ -12,7 +12,7 @@ Nov 27, 2026 · @Gaetano Gnasso
 
 La skill **Ragionamento logico e formalizzazione Lean 4** è un progetto sviluppato dall'Ing. Gaetano Gnasso per migliorare il rigore logico, la coerenza argomentativa e l'affidabilità delle analisi prodotte dai sistemi di intelligenza artificiale.
 
-La skill consente di analizzare problemi, documenti, argomentazioni e ragionamenti espressi in linguaggio naturale, applicando i principi della logica formale e utilizzando Lean 4 per la formalizzazione e la verifica computazionale delle dimostrazioni.
+La skill è ottimizzata per Claude e consente di analizzare problemi, documenti, argomentazioni e ragionamenti espressi in linguaggio naturale, applicando i principi della logica formale e utilizzando Lean 4 per la formalizzazione e la verifica computazionale delle dimostrazioni.
 
 L'obiettivo è rendere accessibili strumenti avanzati di verifica logica anche a utenti che non possiedono conoscenze di programmazione o di logica matematica formale.
 
