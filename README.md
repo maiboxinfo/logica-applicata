@@ -10,21 +10,65 @@ Nov 27, 2026 · @Gaetano Gnasso
 
 ## 1. Descrizione
 
-La skill **Ragionamento logico e formalizzazione Lean 4** è un progetto sviluppato dall'Ing. Gaetano Gnasso per migliorare il rigore logico, la coerenza argomentativa e l'affidabilità delle analisi prodotte dai sistemi di intelligenza artificiale.
+La skill **Ragionamento logico e formalizzazione Lean 4** (`ragionamento-logico-lean`) è un progetto sviluppato dall'Ing. Gaetano Gnasso per migliorare il rigore logico, la coerenza argomentativa e l'affidabilità delle analisi prodotte dai sistemi di intelligenza artificiale.
 
-La skill è ottimizzata per Claude e consente di analizzare problemi, documenti, argomentazioni e ragionamenti espressi in linguaggio naturale, applicando i principi della logica formale e utilizzando Lean 4 per la formalizzazione e la verifica computazionale delle dimostrazioni.
+La skill è ottimizzata per Claude. Serve ad analizzare problemi, documenti, argomentazioni e ragionamenti scritti in linguaggio naturale, compresi i testi giuridici. Applica i principi della logica formale e usa Lean 4, un linguaggio di programmazione e dimostratore interattivo di teoremi, per formalizzare le dimostrazioni e verificarle al computer. Si attiva automaticamente quando l'utente chiede di controllare un ragionamento, di capire se una conclusione segue dalle premesse, di trovare fallacie, contraddizioni o passaggi mancanti, o di valutare la coerenza di un testo. Non serve nominare la logica o Lean.
 
-L'obiettivo è rendere accessibili strumenti avanzati di verifica logica anche a utenti che non possiedono conoscenze di programmazione o di logica matematica formale.
+L'obiettivo è rendere accessibili strumenti avanzati di verifica logica anche a chi non conosce la programmazione o la logica matematica formale. Tutta la parte tecnica resta interna alla skill. L'utente scrive e legge solo in linguaggio naturale, e il codice Lean viene mostrato soltanto su richiesta o quando serve a documentare la verifica.
 
-Il principio di funzionamento è:
+### 1.1 Principio di funzionamento
 
-1. Linguaggio naturale
-2. Ricostruzione logica
-3. Formalizzazione Lean 4
-4. Verifica formale
-5. Spiegazione in linguaggio naturale
+1. **Linguaggio naturale.** La skill capisce l'obiettivo dell'utente e individua il problema logico da risolvere.
+2. **Ricostruzione logica.** Distingue fatti, affermazioni, ipotesi e definizioni. Individua le premesse esplicite e quelle implicite, la conclusione e le informazioni mancanti. Poi costruisce la struttura del ragionamento: entità, regole, condizioni, eccezioni ed eventuali contraddizioni. Chiede chiarimenti solo quando un'ambiguità impedisce davvero di andare avanti.
+3. **Formalizzazione Lean 4.** Le premesse diventano ipotesi di un teorema e la conclusione diventa la tesi da dimostrare. Non si introducono assiomi aggiuntivi.
+4. **Verifica formale.** Il codice viene compilato e controllato dal verificatore. Se la verifica fallisce, la skill corregge la tecnica di dimostrazione o la traduzione, fino a un massimo di tre tentativi.
+5. **Spiegazione in linguaggio naturale.** Il risultato viene riportato in forma chiara e comprensibile, con la distinzione tra ciò che è stato dimostrato e ciò che resta incerto o non formalizzabile.
 
-Ogni risposta prodotta dalla skill si chiude con un registro della verifica formale e con un'avvertenza che invita a verificare i contenuti e a rispettare leggi, regolamenti e deontologia professionale.
+### 1.2 Regole di integrità della formalizzazione
+
+Per evitare dimostrazioni solo apparenti, la skill segue vincoli rigorosi:
+
+- il codice non può contenere scorciatoie o costrutti che aggirano il controllo (`sorry`, `admit`, `axiom`, `native_decide`, `unsafe`, `implemented_by`, `extern`);
+- è vietato aggiungere ipotesi per far riuscire una dimostrazione, indebolire la conclusione o eliminare premesse scomode;
+- per affermare che una conclusione *non* segue dalle premesse bisogna dimostrarlo con un controesempio;
+- le parti che non si possono formalizzare senza interpretazioni arbitrarie vengono isolate e segnalate esplicitamente.
+
+### 1.3 Il verificatore formale
+
+Ogni conclusione presentata come «dimostrata» deve passare dal verificatore **FormalVerifier**. La skill usa `adm.formal.FormalVerifier`, se disponibile, oppure lo script incluso `scripts/formal_verifier.py`, che richiama `lean` o `lake`. Se Lean non è installato, la skill chiede il consenso dell'utente prima di installarlo tramite `elan` e non procede mai di nascosto.
+
+Il verificatore compila il codice, rifiuta i costrutti vietati, controlla quali assiomi sono stati usati e registra la versione di Lean, la durata e l'impronta (hash) del codice. L'esito può essere di quattro tipi:
+
+| Esito | Significato |
+|---|---|
+| **PASSED** | La conclusione deriva dalle ipotesi dichiarate |
+| **FAILED** | Nulla è stato dimostrato |
+| **TIMEOUT** | Tempo scaduto: nulla è stato dimostrato |
+| **UNAVAILABLE** | Verificatore non disponibile: l'analisi è solo preliminare e non verificata |
+
+La skill non simula mai l'esito di Lean. Usa la parola «dimostrato» solo dopo un PASSED ottenuto nella stessa conversazione sul codice effettivamente compilato. Se il codice cambia, la verifica va ripetuta.
+
+### 1.4 Struttura della risposta
+
+Le analisi sono organizzate in sezioni: **Problema, Premesse, Struttura logica, Verifica, Criticità, Conclusione**. Ogni risposta si chiude con un **registro della verifica formale** obbligatorio, che riporta:
+
+- l'esito della verifica;
+- il verificatore usato e la versione di Lean;
+- gli elementi verificati;
+- gli assiomi usati, indicando se si è fatto ricorso alla logica classica;
+- le parti non formalizzate;
+- i primi 12 caratteri dell'hash SHA-256 del codice, per la tracciabilità.
+
+### 1.5 Ambito giuridico
+
+Sui testi giuridici la skill distingue fatti, documenti, norme, interpretazioni, eccezioni e conclusioni. Tiene separata la verifica logico-formale, cioè se la conclusione segue dalle premesse, dalla valutazione giuridica di merito, che spetta sempre al professionista competente.
+
+### 1.6 Limiti e avvertenze
+
+Un esito PASSED attesta solo la **coerenza logica** della conclusione rispetto alle premesse dichiarate. Non certifica che le premesse siano vere, che la traduzione dal linguaggio naturale sia fedele, che la documentazione sia completa, che le interpretazioni siano corrette o che le decisioni siano legittime.
+
+Per questo ogni risposta termina con un'avvertenza. Ricorda che l'analisi è uno strumento di supporto, che i contenuti vanno controllati sulle fonti ufficiali e che vanno rispettati leggi, regolamenti e deontologia professionale.
+
 
 ## 2. Licenza MIT – Libertà di utilizzo
 
